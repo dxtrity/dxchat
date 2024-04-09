@@ -2,10 +2,15 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"net"
+	"os"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/gopxl/beep/mp3"
+	"github.com/gopxl/beep/speaker"
 	"github.com/rivo/tview"
 )
 
@@ -115,6 +120,22 @@ func receiveMessages() {
 		if err != nil {
 			log.Printf("Error reading message: %v", err)
 			break
+		}
+
+		if msg == "$BEEP" {
+			// MAKE TERMINAL BEEP HERE OR SMTH LIKE THAT
+			f, err := os.Open("assets/alert.wav")
+			if err != nil {
+				log.Fatalf("Error: %v", err)
+			}
+
+			streamer, format, err := mp3.Decode(f)
+			if err != nil {
+				fmt.Printf("Error: %v", err)
+			}
+			defer streamer.Close()
+			speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
+			speaker.Play(streamer)
 		}
 
 		// Update UI in the application's main goroutine

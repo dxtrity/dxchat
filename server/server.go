@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 )
 
 // Client represents a connected client.
@@ -122,9 +123,29 @@ Nickname:
 	clientsLock.Unlock()
 }
 
+func checkForMentions(msg string) bool {
+	regex, _ := regexp.Compile(`(@[\w]+)`)
+	return regex.MatchString(msg)
+}
+
+func trimFirstRune(s string) string {
+	_, i := utf8.DecodeRuneInString(s)
+	return s[i:]
+}
+
 func broadcastMessage(msg string) {
 	clientsLock.Lock()
 	defer clientsLock.Unlock()
+
+	if checkForMentions(msg) {
+		name_to_ping := trimFirstRune(msg)
+		for _, usr := range clients {
+			if usr.nickname == name_to_ping {
+				io.WriteString(usr.conn, "$BEEP")
+			}
+		}
+
+	}
 
 	for _, client := range clients {
 		go func(c *Client) {

@@ -1,2 +1,5 @@
 *.exe
 go.sum
+*.wav
+test/
+json/
